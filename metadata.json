@@ -1,0 +1,6 @@
+{
+  "name": "Saar",
+  "description": "A study companion for students. Watch less, understand more. Turn YouTube videos into visual notes, mindmaps, summaries, tables, quizzes, and audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
