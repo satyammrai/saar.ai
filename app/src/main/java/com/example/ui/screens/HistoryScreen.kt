@@ -21,8 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import com.example.data.model.SaarRecap
 import com.example.ui.clay.ClayCardShapeLarge
@@ -31,10 +29,6 @@ import com.example.ui.components.*
 import com.example.ui.theme.FredokaFontFamily
 import com.example.ui.theme.LocalClayColors
 import com.example.ui.theme.NunitoFontFamily
-import com.example.util.SaarExportManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun HistoryScreen(
@@ -44,9 +38,6 @@ fun HistoryScreen(
     favoritesOnly: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    var exportDialogResult by remember { mutableStateOf<SaarExportManager.ExportResult?>(null) }
     val clayColors = LocalClayColors.current
     var searchQuery by remember { mutableStateOf("") }
     var showOnlyFavs by remember { mutableStateOf(favoritesOnly) }
@@ -217,127 +208,16 @@ fun HistoryScreen(
 
                         Spacer(modifier = Modifier.width(6.dp))
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            ClayIconButton(
-                                icon = Icons.Rounded.Download,
-                                onClick = {
-                                    Toast.makeText(context, "Downloading PDF for ${recap.title}... 📑", Toast.LENGTH_SHORT).show()
-                                    coroutineScope.launch(Dispatchers.IO) {
-                                        val res = SaarExportManager.exportToPdf(context, recap)
-                                        withContext(Dispatchers.Main) {
-                                            if (res.success) {
-                                                exportDialogResult = res
-                                                Toast.makeText(context, "PDF saved to phone Downloads! 🎉", Toast.LENGTH_LONG).show()
-                                            } else {
-                                                Toast.makeText(context, "Export error: ${res.error}", Toast.LENGTH_LONG).show()
-                                            }
-                                        }
-                                    }
-                                },
-                                size = 38.dp,
-                                backgroundColor = clayColors.mint,
-                                tint = clayColors.deepGreen,
-                                contentDescription = "Download PDF"
-                            )
-
-                            ClayIconButton(
-                                icon = if (recap.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                                onClick = { onToggleFavorite(recap.id) },
-                                tint = if (recap.isFavorite) clayColors.coral else clayColors.textSecondary,
-                                size = 38.dp,
-                                contentDescription = "Favorite"
-                            )
-                        }
+                        ClayIconButton(
+                            icon = if (recap.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            onClick = { onToggleFavorite(recap.id) },
+                            tint = if (recap.isFavorite) clayColors.coral else clayColors.textSecondary,
+                            size = 38.dp,
+                            contentDescription = "Favorite"
+                        )
                     }
                 }
             }
         }
-    }
-
-    if (exportDialogResult != null) {
-        val res = exportDialogResult!!
-        AlertDialog(
-            onDismissRequest = { exportDialogResult = null },
-            shape = ClayCardShapeLarge,
-            containerColor = clayColors.card,
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(clayColors.mint),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.PictureAsPdf,
-                        contentDescription = null,
-                        tint = clayColors.deepGreen,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = "PDF Downloaded! 🎉",
-                    fontFamily = FredokaFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = clayColors.textPrimary
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = res.fileName,
-                        fontFamily = FredokaFontFamily,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = clayColors.textPrimary
-                    )
-                    Text(
-                        text = "Saved in your phone's Downloads directory:\n${res.filePathDesc}",
-                        fontFamily = NunitoFontFamily,
-                        fontSize = 12.sp,
-                        color = clayColors.textSecondary
-                    )
-                }
-            },
-            confirmButton = {
-                ClayButton(
-                    text = "Open PDF 📄",
-                    onClick = {
-                        res.fileUri?.let { uri ->
-                            SaarExportManager.openFile(context, uri, res.mimeType)
-                        }
-                        exportDialogResult = null
-                    },
-                    backgroundColor = clayColors.coral,
-                    textColor = Color.White
-                )
-            },
-            dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ClayButton(
-                        text = "Share 📤",
-                        onClick = {
-                            res.fileUri?.let { uri ->
-                                SaarExportManager.shareFile(context, uri, res.mimeType, res.fileName)
-                            }
-                        },
-                        backgroundColor = clayColors.sky,
-                        textColor = clayColors.textPrimary
-                    )
-                    ClayButton(
-                        text = "Done",
-                        onClick = { exportDialogResult = null },
-                        backgroundColor = clayColors.background,
-                        textColor = clayColors.textPrimary
-                    )
-                }
-            }
-        )
     }
 }

@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/saar_doc_icon"
+        android:drawable="@drawable/saar_icon_fg"
         android:gravity="center" />
 </layer-list>

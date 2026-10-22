@@ -56,8 +56,8 @@ fun ClayStudentAvatar(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.saar_shhh_icon),
-            contentDescription = "Saar Focus Mascot Avatar",
+            painter = painterResource(id = R.drawable.clay_student),
+            contentDescription = "Student Mascot Avatar",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -98,8 +98,8 @@ fun ClayStarMascotImage(
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.saar_doc_icon),
-            contentDescription = "Saar Study Notes Icon",
+            painter = painterResource(id = R.drawable.saar_icon_fg),
+            contentDescription = "Saar Star Mascot",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )

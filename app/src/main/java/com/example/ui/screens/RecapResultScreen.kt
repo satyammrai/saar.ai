@@ -46,11 +46,8 @@ import com.example.ui.components.*
 import com.example.ui.theme.FredokaFontFamily
 import com.example.ui.theme.LocalClayColors
 import com.example.ui.theme.NunitoFontFamily
-import com.example.util.SaarExportManager
 import java.util.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 enum class RecapTab(val title: String) {
     SUMMARY("Summary"),
@@ -73,45 +70,7 @@ fun RecapResultScreen(
     var selectedTab by remember { mutableStateOf(RecapTab.SUMMARY) }
     var currentSeekSec by remember { mutableStateOf<Int?>(null) }
     var copiedLabel by remember { mutableStateOf<String?>(null) }
-    var exportDialogResult by remember { mutableStateOf<SaarExportManager.ExportResult?>(null) }
-    var isExporting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-
-    fun downloadAsPdf() {
-        if (isExporting) return
-        isExporting = true
-        Toast.makeText(context, "Generating Saar PDF Notes... 📑", Toast.LENGTH_SHORT).show()
-        coroutineScope.launch(Dispatchers.IO) {
-            val res = SaarExportManager.exportToPdf(context, recap)
-            withContext(Dispatchers.Main) {
-                isExporting = false
-                if (res.success) {
-                    exportDialogResult = res
-                    Toast.makeText(context, "PDF saved to phone Downloads! 🎉", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(context, "Could not generate PDF: ${res.error}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
-
-    fun downloadAsWord() {
-        if (isExporting) return
-        isExporting = true
-        Toast.makeText(context, "Generating Saar Word .doc Notes... 📝", Toast.LENGTH_SHORT).show()
-        coroutineScope.launch(Dispatchers.IO) {
-            val res = SaarExportManager.exportToWordDoc(context, recap)
-            withContext(Dispatchers.Main) {
-                isExporting = false
-                if (res.success) {
-                    exportDialogResult = res
-                    Toast.makeText(context, "Word document saved to phone Downloads! 🎉", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(context, "Could not generate Word document: ${res.error}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-    }
 
     // TTS Setup
     var ttsEngine by remember { mutableStateOf<TextToSpeech?>(null) }
@@ -202,14 +161,6 @@ fun RecapResultScreen(
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ClayIconButton(
-                        icon = Icons.Rounded.Download,
-                        onClick = { downloadAsPdf() },
-                        backgroundColor = clayColors.mint,
-                        tint = clayColors.deepGreen,
-                        size = 42.dp,
-                        contentDescription = "Download Notes as PDF"
-                    )
                     ClayIconButton(
                         icon = if (recap.isFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
                         onClick = onToggleFavorite,
@@ -328,79 +279,6 @@ fun RecapResultScreen(
             }
         }
 
-        // QUICK DOWNLOAD & EXPORT BANNER
-        item {
-            ClayCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = clayColors.card,
-                shape = RoundedCornerShape(22.dp),
-                elevation = 5.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(clayColors.coral.copy(alpha = 0.18f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Rounded.Download,
-                                contentDescription = null,
-                                tint = clayColors.coral,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = "Download Notes",
-                                fontFamily = FredokaFontFamily,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = clayColors.textPrimary
-                            )
-                            Text(
-                                text = if (isExporting) "Generating file..." else "All summaries, tables & quiz",
-                                fontFamily = NunitoFontFamily,
-                                fontSize = 11.sp,
-                                color = clayColors.textSecondary
-                            )
-                        }
-                    }
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ClayButton(
-                            text = "PDF 📑",
-                            onClick = { downloadAsPdf() },
-                            backgroundColor = clayColors.coral,
-                            textColor = Color.White,
-                            elevation = 3.dp,
-                            shape = CircleShape
-                        )
-                        ClayButton(
-                            text = "Word 📝",
-                            onClick = { downloadAsWord() },
-                            backgroundColor = clayColors.sky,
-                            textColor = clayColors.textPrimary,
-                            elevation = 2.dp,
-                            shape = CircleShape
-                        )
-                    }
-                }
-            }
-        }
-
         // PUFFY SEGMENTED TABS
         item {
             LazyRow(
@@ -463,78 +341,6 @@ fun RecapResultScreen(
                                 lineHeight = 22.sp,
                                 color = clayColors.textPrimary
                             )
-                        }
-                    }
-                }
-
-                // DOWNLOAD COMPLETE STUDY DOSSIER CARD
-                item {
-                    ClayCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = clayColors.mint.copy(alpha = 0.45f),
-                        shape = ClayCardShapeLarge,
-                        elevation = 6.dp
-                    ) {
-                        Column(modifier = Modifier.padding(18.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(38.dp)
-                                        .clip(CircleShape)
-                                        .background(clayColors.deepGreen.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Rounded.Download,
-                                        contentDescription = null,
-                                        tint = clayColors.deepGreen,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = "Download Complete Study Notes",
-                                        fontFamily = FredokaFontFamily,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
-                                        color = clayColors.textPrimary
-                                    )
-                                    Text(
-                                        text = "Get all summaries, chapters, tables & quiz as PDF/Word",
-                                        fontFamily = NunitoFontFamily,
-                                        fontSize = 12.sp,
-                                        color = clayColors.textSecondary
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                ClayButton(
-                                    text = "Download PDF 📑",
-                                    onClick = { downloadAsPdf() },
-                                    backgroundColor = clayColors.coral,
-                                    textColor = Color.White,
-                                    elevation = 3.dp,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                ClayButton(
-                                    text = "Word (.doc) 📝",
-                                    onClick = { downloadAsWord() },
-                                    backgroundColor = Color.White,
-                                    textColor = clayColors.textPrimary,
-                                    elevation = 2.dp,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
                         }
                     }
                 }
@@ -669,50 +475,26 @@ fun RecapResultScreen(
                 }
 
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ClayButton(
-                            text = if (copiedLabel == "Markdown Notes") "Markdown Copied! ✓" else "Copy Full Notes (Markdown)",
-                            onClick = {
-                                val md = buildString {
-                                    appendLine("# ${recap.title}")
-                                    appendLine("Channel: ${recap.channel} | Video: ${recap.videoUrl}\n")
-                                    appendLine("## TL;DR\n${recap.tldr}\n")
-                                    appendLine("## Notes")
-                                    recap.notes.forEach { s ->
-                                        appendLine("\n### ${s.heading} [${s.timestampFormatted}]")
-                                        s.bullets.forEach { b -> appendLine("- $b") }
-                                    }
+                    ClayButton(
+                        text = if (copiedLabel == "Markdown Notes") "Markdown Copied! ✓" else "Copy Full Notes (Markdown)",
+                        onClick = {
+                            val md = buildString {
+                                appendLine("# ${recap.title}")
+                                appendLine("Channel: ${recap.channel} | Video: ${recap.videoUrl}\n")
+                                appendLine("## TL;DR\n${recap.tldr}\n")
+                                appendLine("## Notes")
+                                recap.notes.forEach { s ->
+                                    appendLine("\n### ${s.heading} [${s.timestampFormatted}]")
+                                    s.bullets.forEach { b -> appendLine("- $b") }
                                 }
-                                copyToClipboard(md, "Markdown Notes")
-                            },
-                            icon = if (copiedLabel == "Markdown Notes") Icons.Rounded.Check else Icons.Rounded.ContentCopy,
-                            backgroundColor = if (copiedLabel == "Markdown Notes") clayColors.mint else clayColors.deepGreen,
-                            textColor = if (copiedLabel == "Markdown Notes") clayColors.deepGreen else Color.White,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            ClayButton(
-                                text = "Download Notes PDF 📑",
-                                onClick = { downloadAsPdf() },
-                                backgroundColor = clayColors.coral,
-                                textColor = Color.White,
-                                elevation = 3.dp,
-                                modifier = Modifier.weight(1f)
-                            )
-                            ClayButton(
-                                text = "Word .doc 📝",
-                                onClick = { downloadAsWord() },
-                                backgroundColor = clayColors.sky,
-                                textColor = clayColors.textPrimary,
-                                elevation = 2.dp,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
+                            }
+                            copyToClipboard(md, "Markdown Notes")
+                        },
+                        icon = if (copiedLabel == "Markdown Notes") Icons.Rounded.Check else Icons.Rounded.ContentCopy,
+                        backgroundColor = if (copiedLabel == "Markdown Notes") clayColors.mint else clayColors.deepGreen,
+                        textColor = if (copiedLabel == "Markdown Notes") clayColors.deepGreen else Color.White,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
 
@@ -955,91 +737,6 @@ fun RecapResultScreen(
                 }
             }
         }
-    }
-
-    // EXPORT COMPLETION DIALOG
-    if (exportDialogResult != null) {
-        val res = exportDialogResult!!
-        AlertDialog(
-            onDismissRequest = { exportDialogResult = null },
-            shape = ClayCardShapeLarge,
-            containerColor = clayColors.card,
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(clayColors.mint),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (res.mimeType == "application/pdf") Icons.Rounded.PictureAsPdf else Icons.Rounded.Description,
-                        contentDescription = null,
-                        tint = clayColors.deepGreen,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = "Notes Downloaded! 🎉",
-                    fontFamily = FredokaFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    color = clayColors.textPrimary
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = res.fileName,
-                        fontFamily = FredokaFontFamily,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
-                        color = clayColors.textPrimary
-                    )
-                    Text(
-                        text = "Saved in your phone's Downloads directory:\n${res.filePathDesc}",
-                        fontFamily = NunitoFontFamily,
-                        fontSize = 12.sp,
-                        color = clayColors.textSecondary
-                    )
-                }
-            },
-            confirmButton = {
-                ClayButton(
-                    text = "Open Document 📄",
-                    onClick = {
-                        res.fileUri?.let { uri ->
-                            SaarExportManager.openFile(context, uri, res.mimeType)
-                        }
-                        exportDialogResult = null
-                    },
-                    backgroundColor = clayColors.coral,
-                    textColor = Color.White
-                )
-            },
-            dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ClayButton(
-                        text = "Share 📤",
-                        onClick = {
-                            res.fileUri?.let { uri ->
-                                SaarExportManager.shareFile(context, uri, res.mimeType, recap.title)
-                            }
-                        },
-                        backgroundColor = clayColors.sky,
-                        textColor = clayColors.textPrimary
-                    )
-                    ClayButton(
-                        text = "Done",
-                        onClick = { exportDialogResult = null },
-                        backgroundColor = clayColors.background,
-                        textColor = clayColors.textPrimary
-                    )
-                }
-            }
-        )
     }
 }
 
